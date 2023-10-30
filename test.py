@@ -6,7 +6,7 @@ from supervision.detection.core import Detections #gives detection object with x
 from supervision.annotators.core import BoundingBoxAnnotator 
 from supervision.tracker.byte_tracker.core import ByteTrack
 from supervision.geometry.core import Point
-from supervision.draw.color import Color
+from supervision.annotators.core import LabelAnnotator
 from supervision.detection.line_counter import LineZone, LineZoneAnnotator
 
 model = YOLO("yolov8m.pt")
@@ -19,11 +19,15 @@ video_info = VideoInfo.from_video_path(SOURCE_VIDEO_PATH) #returns video informa
 LINE_START = Point(0, video_info.height // 2) #pierces through the center of the window
 LINE_END = Point(video_info.width, video_info.height // 2)
 
+tracker = ByteTrack()
+
 generator = get_video_frames_generator(SOURCE_VIDEO_PATH)
 
 line_counter = LineZone(start=LINE_START, end=LINE_END)
 
 box_annotator = BoundingBoxAnnotator(thickness=4)   
+
+label_annotator = LabelAnnotator()
 
 line_annotator = LineZoneAnnotator(text_scale=2, thickness=4)
 
@@ -40,19 +44,25 @@ with VideoSink(TARGET_VIDEO_PATH, video_info) as sink:
 
         results = model(frame)[0]
 
-        detections = Detections( #supervision uses Detection type objects 
-            xyxy=results.boxes.xyxy.cpu().numpy(),
-            confidence=results.boxes.conf.cpu().numpy(),
-            class_id=results.boxes.cls.cpu().numpy().astype(int)
-        )
+        detections = Detections.from_ultralytics(results)#supervision uses Detection type objects
+        detections = detections[(detections.class_id == 0) & (detections.confidence > 0.5)]
+        detections = tracker.update_with_detections(detections)
+
+        labels = [
+            f"#{tracker_id} {results.names[class_id]}"
+            for class_id, tracker_id
+            in zip(detections.class_id, detections.tracker_id)
+        ]
         
         line_counter.trigger(detections=detections) #updates the line counter with the detections in the frame
-        # detections = detections[(detections.class_id == CLASS_ID[0]) & (detections.confidence > 0.5)]
 
         frame = box_annotator.annotate(scene=frame, detections=detections)
 
         line_annotator.annotate(frame=frame, line_counter=line_counter)
 
-        sink.write_frame(frame) #write each predicted frame to the target video path
+        annotated_frame = box_annotator.annotate(frame.copy(), detections=detections)
+        label_annotator.annotate(annotated_frame, detections=detections, labels=labels)
+
+        sink.write_frame(annotated_frame) #write each predicted frame to the target video path
 
 
