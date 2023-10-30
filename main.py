@@ -1,66 +1,61 @@
 from ultralytics import YOLO
 from supervision.utils.video import get_video_frames_generator, VideoInfo, VideoSink
-from supervision.detection.core import Detections #gives detection object with xyxy, confidence, class_id attributes for each detection in the frame'
-from supervision.annotators.core import BoundingBoxAnnotator 
+from supervision.detection.core import Detections
 from supervision.tracker.byte_tracker.core import ByteTrack
 from supervision.geometry.core import Point
-from supervision.annotators.core import LabelAnnotator
+from supervision.annotators.core import BoundingBoxAnnotator, LabelAnnotator
 from supervision.detection.line_counter import LineZone, LineZoneAnnotator
 
-model = YOLO("yolov8m.pt")
-model.fuse()
+def process_video(input_video_path, output_video_path, yolo_model_path):
+    # Load YOLO model and fuse it
+    yolo_model = YOLO(yolo_model_path)
+    yolo_model.fuse()
 
-SOURCE_VIDEO_PATH = "people-walking.mp4"
-TARGET_VIDEO_PATH = "people-walking-result.mp4"
-video_info = VideoInfo.from_video_path(SOURCE_VIDEO_PATH) #returns video informations such as its size, total frames, fps
+    # Get video information
+    video_info = VideoInfo.from_video_path(input_video_path)
 
-LINE_START = Point(0, video_info.height // 2) #pierces through the center of the window
-LINE_END = Point(video_info.width, video_info.height // 2)
+    # Define the line parameters
+    LINE_START = Point(0, video_info.height // 2)
+    LINE_END = Point(video_info.width, video_info.height // 2)
 
-tracker = ByteTrack()
+    # Initialize the tracker
+    tracker = ByteTrack()
 
-generator = get_video_frames_generator(SOURCE_VIDEO_PATH)
+    # Get video frame generator
+    frame_generator = get_video_frames_generator(input_video_path)
 
-line_counter = LineZone(start=LINE_START, end=LINE_END)
+    # Initialize the line counter
+    line_counter = LineZone(start=LINE_START, end=LINE_END)
 
-box_annotator = BoundingBoxAnnotator(thickness=4)   
+    # Initialize annotators
+    box_annotator = BoundingBoxAnnotator(thickness=4)
+    label_annotator = LabelAnnotator()
+    line_annotator = LineZoneAnnotator(text_scale=2, thickness=4)
 
-label_annotator = LabelAnnotator()
+    with VideoSink(output_video_path, video_info) as sink:
+        for frame in frame_generator:
+            results = yolo_model(frame)[0]
 
-line_annotator = LineZoneAnnotator(text_scale=2, thickness=4)
+            detections = Detections.from_ultralytics(results)
+            detections = detections[(detections.class_id == 0) & (detections.confidence > 0.5)]
+            detections = tracker.update_with_detections(detections)
 
-CLASS_NAMES_DICT = model.model.names
+            labels = [f"#{tracker_id} {results.names[class_id]}" for class_id, tracker_id in zip(detections.class_id, detections.tracker_id)]
+            
+            # Update the line counter
+            line_counter.trigger(detections=detections)
 
-CLASS_ID = [0]
+            # Annotate the frame
+            annotated_frame = box_annotator.annotate(frame.copy(), detections=detections)
+            label_annotator.annotate(annotated_frame, detections=detections, labels=labels)
+            line_annotator.annotate(annotated_frame, line_counter=line_counter)
 
-with VideoSink(TARGET_VIDEO_PATH, video_info) as sink:
-    for frame in generator: 
-        '''
-        tqdm is a progress bar library with good support for nested loops and Jupyter/IPython notebooks.
-        frame gives an ndarray numpy array of frame in the give video
-        '''
+            # Write the annotated frame to the output video
+            sink.write_frame(annotated_frame)
 
-        results = model(frame)[0]
+if __name__ == "__main__":
+    SOURCE_VIDEO_PATH = "people-walking.mp4"
+    TARGET_VIDEO_PATH = "people-walking-result.mp4"
+    YOLO_MODEL_PATH = "yolov8m.pt"
 
-        detections = Detections.from_ultralytics(results)#supervision uses Detection type objects
-        detections = detections[(detections.class_id == 0) & (detections.confidence > 0.5)]
-        detections = tracker.update_with_detections(detections)
-
-        labels = [
-            f"#{tracker_id} {results.names[class_id]}"
-            for class_id, tracker_id
-            in zip(detections.class_id, detections.tracker_id)
-        ]
-        
-        line_counter.trigger(detections=detections) #updates the line counter with the detections in the frame
-
-        frame = box_annotator.annotate(scene=frame, detections=detections)
-
-        line_annotator.annotate(frame=frame, line_counter=line_counter)
-
-        annotated_frame = box_annotator.annotate(frame.copy(), detections=detections)
-        label_annotator.annotate(annotated_frame, detections=detections, labels=labels)
-
-        sink.write_frame(annotated_frame) #write each predicted frame to the target video path
-
-
+    process_video(SOURCE_VIDEO_PATH, TARGET_VIDEO_PATH, YOLO_MODEL_PATH)
