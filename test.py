@@ -1,5 +1,4 @@
 from ultralytics import YOLO
-import numpy as np
 from supervision.utils.video import get_video_frames_generator, VideoInfo, VideoSink
 from supervision.utils.notebook import plot_image
 from supervision.detection.core import Detections #gives detection object with xyxy, confidence, class_id attributes for each detection in the frame'
