@@ -34,7 +34,7 @@ def main():
                 converted_output_path = convert_to_h264(output_video_path)
 
             if converted_output_path:
-                st.write(f"Average person count per frame: {average_count}")
+                st.write(f"*** Average person count per frame: {average_count} ***")
                 display_output_video(converted_output_path)
                 
                 os.remove(temp_file_path)
