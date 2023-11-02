@@ -23,7 +23,7 @@ CCTV People Counter is a Python application that uses YOLO (You Only Look Once) 
 
 Ensure you have the following prerequisites installed:
 
-- Python 3.x
+- Python 3.8+
 - Streamlit (can be installed via pip)
 - OpenCV (can be installed via pip)
 - FFmpeg for video conversion (installation may vary by platform)
