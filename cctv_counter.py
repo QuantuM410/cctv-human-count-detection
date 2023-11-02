@@ -63,7 +63,7 @@ class CCTVCounter():
                 # Writes the annotated frame to the output video
                 sink.write_frame(frame)
         
-        average_count = total_count // video_info.total_frames
+        average_count = total_count / video_info.total_frames
         
         return math.ceil(average_count)
 
