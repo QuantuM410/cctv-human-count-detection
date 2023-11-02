@@ -70,3 +70,5 @@ streamlit run app.py
 3. You can monitor the progress of video processing via the progress bar or spinner loader.
 
 ## Demo
+[screen-recorder-thu-nov-02-2023-10-41-46.webm](https://github.com/QuantuM410/cctv-human-count-detection/assets/85943021/fc578e8b-dbe8-4f15-b07e-90e0bef259ff)
+
