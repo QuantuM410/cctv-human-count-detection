@@ -67,6 +67,7 @@ class CCTVCounter():
         
         return math.ceil(average_count)
 
+# for testing the inference
 if __name__ == "__main__":
     SOURCE_VIDEO_PATH = "people-walking.mp4"
     TARGET_VIDEO_PATH = "people-walking-zone-result.mp4"
