@@ -1,4 +1,4 @@
-# CCTV People Counter
+# CCTV Human Counter
 
 CCTV People Counter is a Python application that uses YOLO (You Only Look Once) object detection and tracking to count the number of people in a video and display the results in a user-friendly way.
 

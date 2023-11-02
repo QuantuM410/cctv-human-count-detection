@@ -8,7 +8,7 @@ import subprocess
 st.set_page_config(page_title="CCTV Human Counter", page_icon="📷")
 
 def main():
-    st.title("CCTV People Counter📷")
+    st.title("CCTV Human Counter📷")
 
     st.write("This webapp uses YOLOv8 to count the number of people in a CCTV footage.")
 
