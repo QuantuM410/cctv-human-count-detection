@@ -55,7 +55,7 @@ def process_video(input_video_path, output_video_path, yolo_model_path):
 
 if __name__ == "__main__":
     SOURCE_VIDEO_PATH = "people-walking.mp4"
-    TARGET_VIDEO_PATH = "people-walking-across-result.mp4"
+    TARGET_VIDEO_PATH = "output/people-walking-across-result.mp4"
     YOLO_MODEL_PATH = "yolov8m.pt"
 
     process_video(SOURCE_VIDEO_PATH, TARGET_VIDEO_PATH, YOLO_MODEL_PATH)

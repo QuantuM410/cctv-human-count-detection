@@ -1,4 +1,5 @@
 from ultralytics import YOLO
+import math
 import numpy as np  
 from supervision.utils.video import get_video_frames_generator, VideoInfo, VideoSink
 from supervision.detection.core import Detections
@@ -64,7 +65,7 @@ class CCTVCounter():
         
         average_count = total_count // video_info.total_frames
         
-        return average_count
+        return math.ceil(average_count)
 
 if __name__ == "__main__":
     SOURCE_VIDEO_PATH = "people-walking.mp4"
