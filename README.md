@@ -32,7 +32,7 @@ Ensure you have the following prerequisites installed:
 You can create a virtual environment and install the required packages using the provided `requirements.txt`:
 
 ```
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 
